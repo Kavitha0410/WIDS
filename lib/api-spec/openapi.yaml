@@ -1,0 +1,195 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: wids
+    description: Wireless Intrusion Detection System
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /wids/logs:
+    get:
+      operationId: getWidsLogs
+      tags: [wids]
+      summary: Get WIDS threat logs
+      responses:
+        "200":
+          description: List of threat log entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidsLogsResponse"
+  /wids/status:
+    get:
+      operationId: getWidsStatus
+      tags: [wids]
+      summary: Get system status
+      responses:
+        "200":
+          description: Current system status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidsStatusResponse"
+  /wids/status/toggle:
+    post:
+      operationId: toggleWidsStatus
+      tags: [wids]
+      summary: Start or stop monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleStatusRequest"
+      responses:
+        "200":
+          description: Updated status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidsStatusResponse"
+  /wids/simulate:
+    post:
+      operationId: runWidsSimulation
+      tags: [wids]
+      summary: Simulate one or all attack types
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+      responses:
+        "200":
+          description: Simulation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulateResponse"
+  /wids/settings:
+    get:
+      operationId: getWidsSettings
+      tags: [wids]
+      summary: Get detection settings
+      responses:
+        "200":
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidsSettings"
+    post:
+      operationId: updateWidsSettings
+      tags: [wids]
+      summary: Update detection settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WidsSettings"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidsSettings"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    ThreatLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        attack_type:
+          type: string
+        severity:
+          type: string
+        details:
+          type: string
+      required: [timestamp, attack_type, severity, details]
+    WidsLogsResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThreatLog"
+        total:
+          type: integer
+      required: [logs, total]
+    WidsStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [running, stopped]
+        uptime_seconds:
+          type: integer
+        total_packets_processed:
+          type: integer
+      required: [status, uptime_seconds, total_packets_processed]
+    ToggleStatusRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [start, stop]
+      required: [action]
+    SimulateRequest:
+      type: object
+      properties:
+        attack_type:
+          type: string
+          enum: [deauth, evil_twin, rogue_ap, mac_spoof, all]
+      required: [attack_type]
+    SimulateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        new_detections:
+          type: integer
+        attack_type:
+          type: string
+      required: [success, message, new_detections, attack_type]
+    WidsSettings:
+      type: object
+      properties:
+        ml_detection_enabled:
+          type: boolean
+        rule_based_detection_enabled:
+          type: boolean
+        alert_threshold:
+          type: string
+          enum: [High, Medium, Low]
+        auto_refresh_interval:
+          type: integer
+      required: [ml_detection_enabled, rule_based_detection_enabled, alert_threshold, auto_refresh_interval]
